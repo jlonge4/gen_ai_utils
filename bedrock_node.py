@@ -15,7 +15,7 @@ class BedrockEmbeddingRetriever(BaseComponent):
         self.document_store = document_store
 
     def _get_embeddings(self, text: str):
-        ipmut_body = {}
+        input_body = {}
         input_body["inputText"] = text
         body = json.dumps(input_body)
         response = self.client.invoke_model(
@@ -65,6 +65,20 @@ class BedrockContextRetriever(BaseComponent):
         self.document_store = document_store
         self.filters = filters
         self.top_k = top_k
+
+    def _get_embeddings(self, text: str):
+        input_body = {}
+        input_body["inputText"] = text
+        body = json.dumps(input_body)
+        response = self.client.invoke_model(
+                body=body,
+                modelId="amazon.titan-embed-text-v1",
+                accept="application/json",
+                contentType="application/json",
+            )
+
+            response_body = json.loads(response.get("body").read())
+            return response_body.get("embedding")
 
     def run(self, query) -> tuple[dict[str, list[Document]], str]:
         document_store = self.document_store
