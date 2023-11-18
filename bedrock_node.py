@@ -2,7 +2,6 @@ from haystack.nodes.base import BaseComponent
 from haystack.schema import Document
 import numpy as np
 import boto3
-from langchain.embeddings import BedrockEmbeddings
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union, Tuple
 
 # Custom pipeline node logic since Haystack doesnt currently support Bedrock as a retriever
