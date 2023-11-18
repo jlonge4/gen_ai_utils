@@ -4,16 +4,23 @@ import numpy as np
 import boto3
 from typing import TYPE_CHECKING, Any, Dict, Iterator, List, Optional, Union, Tuple
 
-# Custom pipeline node logic since Haystack doesnt currently support Bedrock as a retriever
+
 class BedrockEmbeddingRetriever(BaseComponent):
     outgoing_edges = 1
+    
+    """
+    Custom pipeline node logic since Haystack doesnt currently support Bedrock as a retriever.
+
+    :param docstore: The docstore to use (FAISS etc.).
+    :param bedrock_client: The boto3(bedrock-runtime) client to be used for the invoke_model operation.
+    :usage: retriever = BedrockEmbeddingRetriever(document_store, client)
+    """
 
     def __init__(self, document_store, bedrock_client):
         self.client = bedrock_client
-        self.embedding_model = BedrockEmbeddings(client=self.client)
         self.document_store = document_store
 
-    def _get_embeddings(self, text: str):
+    def _get_embeddings(self, text: str) -> List[float]:
         input_body = {}
         input_body["inputText"] = text
         body = json.dumps(input_body)
@@ -59,6 +66,16 @@ class BedrockEmbeddingRetriever(BaseComponent):
 class BedrockContextRetriever(BaseComponent):
     outgoing_edges = 1
 
+    """
+    Custom pipeline node logic since Haystack doesnt currently support Bedrock as a retriever.
+
+    :param docstore: The docstore to use (FAISS etc.).
+    :param top_k: Nearest neighbors to fetch.
+    :param filters: Document_name to filter results by.
+    :param bedrock_client: The boto3(bedrock-runtime) client to be used for the invoke_model operation.
+    :usage: retriever = BedrockEmbeddingRetriever(document_store, top_k=5, filters="document.pdf", bedrock_client=client)
+    """
+
     def __init__(self, document_store, top_k, filters, bedrock_client):
         self.client = bedrock_client
         self.document_store = document_store
@@ -96,7 +113,7 @@ class BedrockContextRetriever(BaseComponent):
                 if r.meta['document_name'] == filters:
                     cont.append(r)
             if len(cont) == 0:
-                cont = [Document(content="No Context Found", meta={"document_name": "N/A", "score": 0, "page": "N/A", "sha1": "N/A"})]
+                cont = [Document(content="No Context Found", meta={"document_name": "N/A", "score": 0, "page": "N/A"})]
                 return cont
             top_k_cont = cont[:self.top_k]
             answers = top_k_cont
