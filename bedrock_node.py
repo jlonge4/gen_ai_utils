@@ -14,11 +14,33 @@ class BedrockEmbeddingRetriever(BaseComponent):
         self.embedding_model = BedrockEmbeddings(client=self.client)
         self.document_store = document_store
 
+    def _get_embeddings(self, text: str):
+        ipmut_body = {}
+        input_body["inputText"] = text
+        body = json.dumps(input_body)
+        response = self.client.invoke_model(
+                body=body,
+                modelId="amazon.titan-embed-text-v1",
+                accept="application/json",
+                contentType="application/json",
+            )
+
+            response_body = json.loads(response.get("body").read())
+            return response_body.get("embedding")
+
+    
+    def get_document_embeddings(self, documents: List[str]):
+        doc_embeds = []
+        for doc in documents:
+            response = self._get_embeddings(doc)
+            doc_embeds.append(response)
+        return doc_embeds
+
     def run(self, documents: List[Document]) -> tuple[dict[str, list[Document]], str]:
         content = [d.content for d in documents]
         metadata = [d.meta for d in documents]
         
-        embeddings = self.embedding_model.embed_documents(content)
+        embeddings = self.get_document_embeddings(content)
         np_embedded = np.array(embeddings, dtype=np.float32)
 
         docs = []
@@ -40,7 +62,6 @@ class BedrockContextRetriever(BaseComponent):
 
     def __init__(self, document_store, top_k, filters, bedrock_client):
         self.client = bedrock_client
-        self.embedding_model = BedrockEmbeddings(client=self.client)
         self.document_store = document_store
         self.filters = filters
         self.top_k = top_k
@@ -48,8 +69,7 @@ class BedrockContextRetriever(BaseComponent):
     def run(self, query) -> tuple[dict[str, list[Document]], str]:
         document_store = self.document_store
         filters = self.filters
-        embedding_model = self.embedding_model
-        embedded_q = np.array([embedding_model.embed_query(query)], dtype=np.float32)
+        embedded_q = np.array([self._get_embeddings(query)], dtype=np.float32)
 
         if filters is not None:
             num_docs_to_check = 30
