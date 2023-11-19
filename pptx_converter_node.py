@@ -18,3 +18,17 @@ class PptxConverter(BaseComponent):
       "documents": document
     }
     return output, "output_1"  
+
+
+# TODO get rid of langchain with the below ->
+#pip install python-pptx
+# from pptx import Presentation
+# import os
+# pptx_path = 'Path of file'
+# pres = Presentation(pptx_path)
+# for slide_num, slide in enumerate(prs.slides):
+#   print(f'slide num {slide_number + 1}:')
+# for shape in slide.shapes:
+#   if hasattr(shape, "text"):
+#     print(shape.text)
+    
